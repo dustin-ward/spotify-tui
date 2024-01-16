@@ -3,33 +3,24 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/dustin-ward/spotify-tui/spotifyapi"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/zmb3/spotify/v2"
 )
 
-type Track struct {
-	Name     string
-	Artist   string
-	Album    string
-	Duration string
+type SavedTrack struct {
+	spotify.SavedTrack
 }
 
-var songs = []list.Item{
-	Track{"The End of the World", "Skeeter Davis", "The Essential Skeeter Davis", "2:38"},
-	Track{"The Night We Met", "Lord Huron", "Strange Trails", "3:28"},
-	Track{"As the World Caves In", "Matt Maltese", "As the World Caves In", "3:39"},
-	Track{"Bags", "Clairo", "Immunity", "4:21"},
-	Track{"Ruby", "Geskle", "Rose Colored Glasses", "3:22"},
-	Track{"Velvet Light", "Jakob", "Velvet Light", "2:22"},
-	Track{"affection", "BETWEEN FRIENDS", "we just need some time together", "3:55"},
-	Track{"Clueless", "The Marias", "Clueless", "3:47"},
-}
-
-const listHeight = 14
+const listHeight = 20
 
 var (
 	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
@@ -40,7 +31,7 @@ var (
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
-func (t Track) FilterValue() string { return t.Name }
+func (t SavedTrack) FilterValue() string { return t.Name }
 
 type trackDelegate struct{}
 
@@ -48,7 +39,7 @@ func (d trackDelegate) Height() int                             { return 1 }
 func (d trackDelegate) Spacing() int                            { return 0 }
 func (d trackDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 func (d trackDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	t, ok := listItem.(Track)
+	t, ok := listItem.(SavedTrack)
 	if !ok {
 		return
 	}
@@ -57,15 +48,18 @@ func (d trackDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 	if len(name) > 25 {
 		name = name[:22] + "..."
 	}
-	artist := t.Artist
+	artist := t.Artists[0].Name
+	for i := 1; i < len(t.Artists); i++ {
+		artist = fmt.Sprintf("%s, %s", artist, t.Artists[i].Name)
+	}
 	if len(artist) > 15 {
 		artist = artist[:12] + "..."
 	}
-	album := t.Album
+	album := t.Album.Name
 	if len(album) > 25 {
 		album = album[:22] + "..."
 	}
-	str := fmt.Sprintf("%-25s %15s\t%25s %5s", name, artist, album, t.Duration)
+	str := fmt.Sprintf("| %-25s | %15s | %25s | %5s |", name, artist, album, fmtDuration(t.TimeDuration()))
 
 	fn := itemStyle.Render
 	if index == m.Index() {
@@ -79,7 +73,7 @@ func (d trackDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 
 type model struct {
 	list     list.Model
-	choice   *Track
+	choice   *SavedTrack
 	quitting bool
 }
 
@@ -100,7 +94,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "enter":
-			t, ok := m.list.SelectedItem().(Track)
+			t, ok := m.list.SelectedItem().(SavedTrack)
 			if ok {
 				m.choice = &t
 			}
@@ -115,7 +109,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	if m.choice != nil {
-		return quitTextStyle.Render(fmt.Sprintf("Now Playing: %s - %s", m.choice.Name, m.choice.Artist))
+		return quitTextStyle.Render(fmt.Sprintf("Now Playing: %s - %s", m.choice.Name, m.choice.Artists[0].Name))
 	}
 	if m.quitting {
 		return quitTextStyle.Render("Not playing any track.")
@@ -124,9 +118,24 @@ func (m model) View() string {
 }
 
 func main() {
+	err := spotifyapi.Login()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sptracks, err := spotifyapi.GetLikedTracks()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tracksItems := make([]list.Item, 0, 1000)
+	for i := 0; i < len(sptracks); i++ {
+		tracksItems = append(tracksItems, SavedTrack{sptracks[i]})
+	}
+
 	const defaultWidth = 20
 
-	l := list.New(songs, trackDelegate{}, defaultWidth, listHeight)
+	l := list.New(tracksItems, trackDelegate{}, defaultWidth, listHeight)
 	l.Title = "Liked Songs"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
@@ -140,4 +149,11 @@ func main() {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
+}
+
+func fmtDuration(t time.Duration) string {
+	s := int(t.Seconds())
+	m := s / 60
+	s %= 60
+	return fmt.Sprintf("%d:%02d", m, s)
 }

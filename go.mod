@@ -1,4 +1,4 @@
-module dustin-ward/spotify-tui
+module github.com/dustin-ward/spotify-tui
 
 go 1.21.3
 
@@ -6,6 +6,7 @@ require (
 	github.com/charmbracelet/bubbles v0.17.1
 	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/lipgloss v0.9.1
+	github.com/zmb3/spotify v1.3.0
 	github.com/zmb3/spotify/v2 v2.4.0
 )
 
