@@ -25,7 +25,7 @@ const listHeight = 20
 var (
 	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("46"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
@@ -108,9 +108,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	if m.choice != nil {
-		return quitTextStyle.Render(fmt.Sprintf("Now Playing: %s - %s", m.choice.Name, m.choice.Artists[0].Name))
-	}
+	// if m.choice != nil {
+	// 	return quitTextStyle.Render(fmt.Sprintf("Now Playing: %s - %s", m.choice.Name, m.choice.Artists[0].Name))
+	// }
 	return "\n" + m.list.View()
 }
 
