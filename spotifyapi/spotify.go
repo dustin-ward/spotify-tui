@@ -2,9 +2,13 @@ package spotifyapi
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/zmb3/spotify/v2"
 )
+
+var DEVICE_ID spotify.ID
 
 func GetLikedTracks() ([]spotify.SavedTrack, error) {
 	offset := 0
@@ -44,8 +48,31 @@ func PlayPauseTrack(uri *spotify.URI) error {
 		return spclient.Pause(ctx)
 	} else {
 		return spclient.PlayOpt(ctx, &spotify.PlayOptions{
-			URIs: []spotify.URI{*uri},
+			DeviceID: &DEVICE_ID,
+			URIs:     []spotify.URI{*uri},
 		})
 	}
 
+}
+
+func InitDevice() error {
+	ctx := context.Background()
+	devices, err := spclient.PlayerDevices(ctx)
+	if err != nil {
+		return err
+	}
+
+	target := os.Getenv("SPOTIFY_DEVICE")
+	if target == "" {
+		return fmt.Errorf("no device set in $SPOTIFY_DEVICE")
+	}
+
+	for _, d := range devices {
+		if d.Name == target {
+			DEVICE_ID = d.ID
+			return nil
+		}
+	}
+
+	return fmt.Errorf("device: '%s' not found", target)
 }
