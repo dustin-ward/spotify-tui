@@ -98,7 +98,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if ok {
 				m.choice = &t
 			}
-			return m, tea.Quit
+			return m, playPauseTrack(&t.URI)
 		}
 	}
 
@@ -111,18 +111,25 @@ func (m model) View() string {
 	if m.choice != nil {
 		return quitTextStyle.Render(fmt.Sprintf("Now Playing: %s - %s", m.choice.Name, m.choice.Artists[0].Name))
 	}
-	if m.quitting {
-		return quitTextStyle.Render("Not playing any track.")
-	}
 	return "\n" + m.list.View()
 }
 
 func main() {
+	if len(os.Getenv("DEBUG")) > 0 {
+		f, err := tea.LogToFile("debug.log", "debug")
+		if err != nil {
+			fmt.Println("fatal:", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+	}
+
 	err := spotifyapi.Login()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	log.Println("Getting tracks...")
 	sptracks, err := spotifyapi.GetLikedTracks()
 	if err != nil {
 		log.Fatal(err)
@@ -137,15 +144,15 @@ func main() {
 
 	l := list.New(tracksItems, trackDelegate{}, defaultWidth, listHeight)
 	l.Title = "Liked Songs"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
+	l.SetShowStatusBar(true)
+	l.SetFilteringEnabled(true)
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 
 	m := model{list: l}
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
@@ -156,4 +163,18 @@ func fmtDuration(t time.Duration) string {
 	m := s / 60
 	s %= 60
 	return fmt.Sprintf("%d:%02d", m, s)
+}
+
+type playerStatusMsg string
+
+func playPauseTrack(uri *spotify.URI) tea.Cmd {
+	return func() tea.Msg {
+		err := spotifyapi.PlayPauseTrack(uri)
+
+		if err != nil {
+			return playerStatusMsg("err " + err.Error())
+		}
+
+		return playerStatusMsg("play/pause")
+	}
 }
