@@ -23,30 +23,42 @@ var (
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
+	listStyle         = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("46"))
 )
 
-func NewListModel(sptracks []spotify.SavedTrack) list.Model {
+type ListModel struct {
+	list list.Model
+}
+
+func NewListModel(sptracks []spotify.SavedTrack, title string) ListModel {
 	tracksItems := make([]list.Item, 0, 1000)
 	for i := 0; i < len(sptracks); i++ {
 		tracksItems = append(tracksItems, SavedTrack{sptracks[i]})
 	}
 
 	l := list.New(tracksItems, trackDelegate{}, DEFAULT_WIDTH, LIST_HEIGHT)
-	l.Title = "Liked Songs"
+	l.Title = title
 	l.SetShowStatusBar(true)
 	l.SetFilteringEnabled(true)
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 
-	return l
+	return ListModel{list: l}
 }
 
 type SavedTrack struct {
 	spotify.SavedTrack
 }
 
-func (t SavedTrack) FilterValue() string { return t.Name }
+func (t SavedTrack) FilterValue() string {
+	ret := t.Name
+	for _, a := range t.Artists {
+		ret = fmt.Sprintf("%s %s", ret, a.Name)
+	}
+	ret += " " + t.Album.Name
+	return ret
+}
 
 type trackDelegate struct{}
 
@@ -91,4 +103,34 @@ func fmtDuration(t time.Duration) string {
 	m := s / 60
 	s %= 60
 	return fmt.Sprintf("%d:%02d", m, s)
+}
+
+func (m ListModel) Init() tea.Cmd {
+	return nil
+}
+
+func (m ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.list.SetWidth(msg.Width)
+		return m, nil
+
+	case tea.KeyMsg:
+		switch keypress := msg.String(); keypress {
+		case "q", "ctrl+c":
+			return m, tea.Quit
+
+		case "enter":
+			t, _ := m.list.SelectedItem().(SavedTrack)
+			return m, PlayPauseTrack(&t.URI)
+		}
+	}
+
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
+}
+
+func (m ListModel) View() string {
+	return listStyle.Render(m.list.View())
 }

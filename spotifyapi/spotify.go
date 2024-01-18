@@ -10,13 +10,17 @@ import (
 
 var DEVICE_ID spotify.ID
 
+const (
+	PAGE_SIZE = 50
+)
+
 func GetLikedTracks() ([]spotify.SavedTrack, error) {
 	offset := 0
-	found := 50
+	found := PAGE_SIZE
 	tracks := make([]spotify.SavedTrack, 0, 500)
-	for found == 50 && offset < 10 {
+	for found == PAGE_SIZE && offset < 10*PAGE_SIZE {
 		result, err := spclient.CurrentUsersTracks(context.Background(),
-			spotify.Limit(50),
+			spotify.Limit(PAGE_SIZE),
 			spotify.Offset(offset),
 		)
 		if err != nil {
@@ -25,7 +29,7 @@ func GetLikedTracks() ([]spotify.SavedTrack, error) {
 
 		found = len(result.Tracks)
 		tracks = append(tracks, result.Tracks...)
-		offset += 1
+		offset += PAGE_SIZE
 	}
 
 	return tracks, nil

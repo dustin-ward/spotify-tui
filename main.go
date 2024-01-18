@@ -8,13 +8,14 @@ import (
 	"github.com/dustin-ward/spotify-tui/components"
 	"github.com/dustin-ward/spotify-tui/spotifyapi"
 
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/zmb3/spotify/v2"
 )
 
 type mainModel struct {
-	list         list.Model
+	list         tea.Model
+	player       tea.Model
 	choice       *components.SavedTrack
 	currentTrack *spotify.FullTrack
 }
@@ -28,29 +29,32 @@ func (m mainModel) Init() tea.Cmd {
 }
 
 func newMainModel(sptracks []spotify.SavedTrack) mainModel {
-	return mainModel{list: components.NewListModel(sptracks)}
+	return mainModel{
+		list:   components.NewListModel(sptracks, "Liked Songs"),
+		player: components.NewPlayerModel(),
+	}
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.list.SetWidth(msg.Width)
-		return m, nil
+	// case tea.WindowSizeMsg:
+	// 	m.list.SetWidth(msg.Width)
+	// 	return m, nil
 
-	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "q", "ctrl+c":
-			return m, tea.Quit
+	// case tea.KeyMsg:
+	// 	switch keypress := msg.String(); keypress {
+	// 	case "q", "ctrl+c":
+	// 		return m, tea.Quit
 
-		case "enter":
-			t, ok := m.list.SelectedItem().(components.SavedTrack)
-			if ok {
-				m.choice = &t
-			}
-			return m, playPauseTrack(&t.URI)
-		}
+	// 	case "enter":
+	// 		t, ok := m.list.SelectedItem().(components.SavedTrack)
+	// 		if ok {
+	// 			m.choice = &t
+	// 		}
+	// 		return m, components.PlayPauseTrack(&t.URI)
+	// 	}
 
-	case playerStatusMsg:
+	case components.PlayerStatusMsg:
 		str := string(msg)
 		if str != "ok" {
 			log.Println(str)
@@ -63,7 +67,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m mainModel) View() string {
-	return "\n" + m.list.View()
+	return lipgloss.JoinHorizontal(lipgloss.Top, m.list.View(), m.player.View())
 }
 
 func main() {
@@ -90,19 +94,5 @@ func main() {
 	if _, err := tea.NewProgram(newMainModel(sptracks), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
-	}
-}
-
-type playerStatusMsg string
-
-func playPauseTrack(uri *spotify.URI) tea.Cmd {
-	return func() tea.Msg {
-		err := spotifyapi.PlayPauseTrack(uri)
-
-		if err != nil {
-			return playerStatusMsg("err " + err.Error())
-		}
-
-		return playerStatusMsg("ok")
 	}
 }
