@@ -4,30 +4,19 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
+	"github.com/dustin-ward/spotify-tui/components"
 	"github.com/dustin-ward/spotify-tui/spotifyapi"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/zmb3/spotify/v2"
-)
-
-var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("46"))
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
 type mainModel struct {
 	list         list.Model
-	choice       *SavedTrack
+	choice       *components.SavedTrack
 	currentTrack *spotify.FullTrack
-	quitting     bool
 }
 
 func (m mainModel) Init() tea.Cmd {
@@ -39,7 +28,7 @@ func (m mainModel) Init() tea.Cmd {
 }
 
 func newMainModel(sptracks []spotify.SavedTrack) mainModel {
-	return mainModel{list: newListModel(sptracks)}
+	return mainModel{list: components.NewListModel(sptracks)}
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -51,11 +40,10 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
-			m.quitting = true
 			return m, tea.Quit
 
 		case "enter":
-			t, ok := m.list.SelectedItem().(SavedTrack)
+			t, ok := m.list.SelectedItem().(components.SavedTrack)
 			if ok {
 				m.choice = &t
 			}
@@ -103,13 +91,6 @@ func main() {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
-}
-
-func fmtDuration(t time.Duration) string {
-	s := int(t.Seconds())
-	m := s / 60
-	s %= 60
-	return fmt.Sprintf("%d:%02d", m, s)
 }
 
 type playerStatusMsg string

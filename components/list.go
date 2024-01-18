@@ -1,20 +1,31 @@
-package main
+package components
 
 import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/zmb3/spotify/v2"
 )
 
 const DEFAULT_WIDTH = 20
 const LIST_HEIGHT = 40
 
-func newListModel(sptracks []spotify.SavedTrack) list.Model {
+var (
+	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
+	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
+	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("46"))
+	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
+	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
+	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
+)
+
+func NewListModel(sptracks []spotify.SavedTrack) list.Model {
 	tracksItems := make([]list.Item, 0, 1000)
 	for i := 0; i < len(sptracks); i++ {
 		tracksItems = append(tracksItems, SavedTrack{sptracks[i]})
@@ -73,4 +84,11 @@ func (d trackDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 	}
 
 	fmt.Fprint(w, fn(str))
+}
+
+func fmtDuration(t time.Duration) string {
+	s := int(t.Seconds())
+	m := s / 60
+	s %= 60
+	return fmt.Sprintf("%d:%02d", m, s)
 }
