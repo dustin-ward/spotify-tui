@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -21,10 +22,6 @@ type mainModel struct {
 }
 
 func (m mainModel) Init() tea.Cmd {
-	err := spotifyapi.InitDevice()
-	if err != nil {
-		log.Fatal(err)
-	}
 	return nil
 }
 
@@ -53,12 +50,43 @@ func (m mainModel) View() string {
 	return lipgloss.JoinHorizontal(lipgloss.Top, m.list.View(), m.player.View())
 }
 
-func main() {
+func init() {
 	err := spotifyapi.Login()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	target := os.Getenv("SPOTIFY_DEVICE")
+	if target == "" {
+		log.Fatal("Error: No device set in $SPOTIFY_DEVICE")
+	}
+
+	ctx := context.Background()
+	devices, err := spotifyapi.Client.PlayerDevices(ctx)
+	if err != nil {
+		log.Fatal("Error:", err)
+	}
+
+	components.DEVICE_ID = ""
+	for _, d := range devices {
+		if d.Name == target {
+			components.DEVICE_ID = d.ID
+		}
+	}
+
+	if components.DEVICE_ID == "" {
+		log.Fatal("Error: Device not found. Make sure spotify is runnning")
+	}
+
+	playerState, err := spotifyapi.Client.PlayerState(ctx)
+	if err != nil {
+		log.Fatal("Error:", err)
+	}
+
+	components.CurrentlyPlaying = playerState.Item
+}
+
+func main() {
 	log.Println("Getting tracks...")
 	sptracks, err := spotifyapi.GetLikedTracks()
 	if err != nil {

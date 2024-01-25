@@ -28,9 +28,9 @@ var (
 			spotifyauth.ScopeStreaming,
 		),
 	)
-	ch       = make(chan *spotify.Client)
-	state    = "abc123"
-	spclient *spotify.Client
+	ch     = make(chan *spotify.Client)
+	state  = "abc123"
+	Client *spotify.Client
 )
 
 func Login() error {
@@ -56,7 +56,7 @@ func Login() error {
 	}
 	log.Println("Logged In As:", user.ID)
 
-	spclient = client
+	Client = client
 	return nil
 }
 

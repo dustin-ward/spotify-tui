@@ -2,13 +2,9 @@ package spotifyapi
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/zmb3/spotify/v2"
 )
-
-var DEVICE_ID spotify.ID
 
 const (
 	PAGE_SIZE = 50
@@ -19,7 +15,7 @@ func GetLikedTracks() ([]spotify.SavedTrack, error) {
 	found := PAGE_SIZE
 	tracks := make([]spotify.SavedTrack, 0, 500)
 	for found == PAGE_SIZE && offset < 10*PAGE_SIZE {
-		result, err := spclient.CurrentUsersTracks(context.Background(),
+		result, err := Client.CurrentUsersTracks(context.Background(),
 			spotify.Limit(PAGE_SIZE),
 			spotify.Offset(offset),
 		)
@@ -35,48 +31,25 @@ func GetLikedTracks() ([]spotify.SavedTrack, error) {
 	return tracks, nil
 }
 
-func PlayPauseTrack(uri *spotify.URI) error {
+func PlayPauseTrack(uri *spotify.URI, device spotify.ID) (bool, error) {
 	ctx := context.Background()
-	playbackStatus, err := spclient.PlayerState(ctx)
+	playbackStatus, err := Client.PlayerState(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if playbackStatus.Item != nil && (*playbackStatus.Item).URI == *uri {
 		if !playbackStatus.Playing {
-			return spclient.Play(ctx)
+			return true, Client.Play(ctx)
 		} else {
-			return spclient.Pause(ctx)
+			return false, Client.Pause(ctx)
 		}
 	} else if uri == nil {
-		return spclient.Pause(ctx)
+		return false, Client.Pause(ctx)
 	} else {
-		return spclient.PlayOpt(ctx, &spotify.PlayOptions{
-			DeviceID: &DEVICE_ID,
+		return true, Client.PlayOpt(ctx, &spotify.PlayOptions{
+			DeviceID: &device,
 			URIs:     []spotify.URI{*uri},
 		})
 	}
-
-}
-
-func InitDevice() error {
-	ctx := context.Background()
-	devices, err := spclient.PlayerDevices(ctx)
-	if err != nil {
-		return err
-	}
-
-	target := os.Getenv("SPOTIFY_DEVICE")
-	if target == "" {
-		return fmt.Errorf("no device set in $SPOTIFY_DEVICE")
-	}
-
-	for _, d := range devices {
-		if d.Name == target {
-			DEVICE_ID = d.ID
-			return nil
-		}
-	}
-
-	return fmt.Errorf("device: '%s' not found", target)
 }

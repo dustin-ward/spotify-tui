@@ -20,11 +20,12 @@ const LIST_HEIGHT = 40
 var (
 	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("46"))
+	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#5900bf"))
+	playingItemStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#00bf06"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-	listStyle         = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("46"))
+	listStyle         = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("#5900bf"))
 )
 
 type ListModel struct {
@@ -101,10 +102,21 @@ func (d trackDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 	)
 	str := fmt.Sprintf(fmtString, name, artist, album, fmtDuration(t.TimeDuration()))
 
+	isCurrent := false
 	fn := itemStyle.Render
+	if CurrentlyPlaying != nil && t.ID == CurrentlyPlaying.ID {
+		isCurrent = true
+		fn = func(s ...string) string {
+			return playingItemStyle.Render("▶ " + strings.Join(s, " "))
+		}
+	}
 	if index == m.Index() {
 		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + strings.Join(s, " "))
+			arrow := "> "
+			if isCurrent {
+				arrow = "▶ "
+			}
+			return selectedItemStyle.Render(arrow + strings.Join(s, " "))
 		}
 	}
 
