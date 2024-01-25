@@ -37,23 +37,6 @@ func newMainModel(sptracks []spotify.SavedTrack) mainModel {
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	// case tea.WindowSizeMsg:
-	// 	m.list.SetWidth(msg.Width)
-	// 	return m, nil
-
-	// case tea.KeyMsg:
-	// 	switch keypress := msg.String(); keypress {
-	// 	case "q", "ctrl+c":
-	// 		return m, tea.Quit
-
-	// 	case "enter":
-	// 		t, ok := m.list.SelectedItem().(components.SavedTrack)
-	// 		if ok {
-	// 			m.choice = &t
-	// 		}
-	// 		return m, components.PlayPauseTrack(&t.URI)
-	// 	}
-
 	case components.PlayerStatusMsg:
 		str := string(msg)
 		if str != "ok" {
@@ -71,15 +54,6 @@ func (m mainModel) View() string {
 }
 
 func main() {
-	if len(os.Getenv("DEBUG")) > 0 {
-		f, err := tea.LogToFile("debug.log", "debug")
-		if err != nil {
-			fmt.Println("fatal:", err)
-			os.Exit(1)
-		}
-		defer f.Close()
-	}
-
 	err := spotifyapi.Login()
 	if err != nil {
 		log.Fatal(err)

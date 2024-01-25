@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 	"github.com/zmb3/spotify/v2"
 )
 
@@ -72,21 +73,33 @@ func (d trackDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 	}
 
 	name := t.Name
-	if utf8.RuneCountInString(name) > 25 {
-		name = string([]rune(name)[:22]) + "..."
+	nameWidth := runewidth.StringWidth(name)
+	nameRunes := utf8.RuneCountInString(name)
+	if nameWidth > 25 {
+		name = string([]rune(name)[:20]) + "..."
 	}
 	artist := t.Artists[0].Name
 	for i := 1; i < len(t.Artists); i++ {
 		artist = fmt.Sprintf("%s, %s", artist, t.Artists[i].Name)
 	}
-	if utf8.RuneCountInString(artist) > 15 {
-		artist = string([]rune(artist)[:12]) + "..."
+	artistWidth := runewidth.StringWidth(artist)
+	artistRunes := utf8.RuneCountInString(artist)
+	if artistWidth > 15 {
+		artist = string([]rune(artist)[:10]) + "..."
 	}
 	album := t.Album.Name
-	if utf8.RuneCountInString(album) > 25 {
-		album = string([]rune(album)[:22]) + "..."
+	albumWidth := runewidth.StringWidth(album)
+	albumRunes := utf8.RuneCountInString(album)
+	if albumWidth > 25 {
+		album = string([]rune(album)[:20]) + "..."
 	}
-	str := fmt.Sprintf("| %-25s | %15s | %25s | %5s |", name, artist, album, fmtDuration(t.TimeDuration()))
+	fmtString := fmt.Sprintf("| %%-%ds | %%%ds | %%%ds | %%%ds |",
+		25-(nameWidth-nameRunes),
+		15-(artistWidth-artistRunes),
+		25-(albumWidth-albumRunes),
+		5,
+	)
+	str := fmt.Sprintf(fmtString, name, artist, album, fmtDuration(t.TimeDuration()))
 
 	fn := itemStyle.Render
 	if index == m.Index() {
