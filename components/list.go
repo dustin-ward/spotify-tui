@@ -55,10 +55,10 @@ type SavedTrack struct {
 
 func (t SavedTrack) FilterValue() string {
 	ret := t.Name
-	// for _, a := range t.Artists {
-	// 	ret = fmt.Sprintf("%s %s", ret, a.Name)
-	// }
-	// ret += " " + t.Album.Name
+	for _, a := range t.Artists {
+		ret = fmt.Sprintf("%s %s", ret, a.Name)
+	}
+	ret += " " + t.Album.Name
 	return ret
 }
 

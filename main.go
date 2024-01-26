@@ -88,6 +88,13 @@ func init() {
 
 	components.CurrentlyPlaying = playerState.Item
 	components.IsPlaying = playerState.Playing
+
+	currentUser, err := spotifyapi.Client.CurrentUser(ctx)
+	if err != nil {
+		log.Fatal("Error:", err)
+	}
+	uri := spotify.URI(fmt.Sprintf("%s:collection", currentUser.URI))
+	components.CurrentContext = &uri
 }
 
 func main() {

@@ -19,6 +19,7 @@ var (
 	DEVICE_ID        spotify.ID
 	CurrentlyPlaying *spotify.FullTrack
 	IsPlaying        bool
+	CurrentContext   *spotify.URI
 )
 
 type PlayerModel struct {
@@ -33,7 +34,7 @@ type PlayerStatusMsg string
 func PlayPauseTrack(uri *spotify.URI) tea.Cmd {
 	return func() tea.Msg {
 		var err error
-		IsPlaying, err = spotifyapi.PlayPauseTrack(uri, DEVICE_ID)
+		IsPlaying, err = spotifyapi.PlayPauseTrack(uri, DEVICE_ID, CurrentContext)
 
 		if err != nil {
 			return PlayerStatusMsg("err " + err.Error())
