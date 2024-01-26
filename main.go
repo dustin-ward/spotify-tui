@@ -14,6 +14,10 @@ import (
 	"github.com/zmb3/spotify/v2"
 )
 
+var (
+	docStyle = lipgloss.NewStyle().Padding(1, 2, 1, 2)
+)
+
 type mainModel struct {
 	list   tea.Model
 	player tea.Model
@@ -46,7 +50,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m mainModel) View() string {
-	return lipgloss.JoinHorizontal(lipgloss.Top, m.list.View(), m.player.View())
+	return docStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, m.list.View(), m.player.View()))
 }
 
 func init() {

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	playerStyle = lipgloss.NewStyle().Align(lipgloss.Center).Width(40).Height(20).BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("46"))
+	playerStyle = lipgloss.NewStyle().Align(lipgloss.Center).Width(65).Height(10).BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#5900bf")).PaddingTop(2).PaddingBottom(2)
 )
 
 var (
@@ -77,10 +77,10 @@ func (m PlayerModel) View() string {
 			artists = fmt.Sprintf("%s, %s", artists, a.Name)
 		}
 		view += artists + "\n"
-		view += CurrentlyPlaying.Album.Name
-
+		view += CurrentlyPlaying.Album.Name + "\n\n"
+		view += "◀◀   ▷   ▶▶"
 	} else {
 		view = "Nothing playing at the moment..."
 	}
-	return view
+	return playerStyle.Render(view)
 }

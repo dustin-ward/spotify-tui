@@ -14,7 +14,7 @@ import (
 	"github.com/zmb3/spotify/v2"
 )
 
-const DEFAULT_WIDTH = 20
+const LIST_WIDTH = 92
 const LIST_HEIGHT = 40
 
 var (
@@ -25,7 +25,7 @@ var (
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-	listStyle         = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("#5900bf"))
+	listStyle         = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("#00bf06")).MarginRight(1).PaddingRight(2)
 )
 
 type ListModel struct {
@@ -38,7 +38,7 @@ func NewListModel(sptracks []spotify.SavedTrack, title string) ListModel {
 		tracksItems = append(tracksItems, SavedTrack{sptracks[i]})
 	}
 
-	l := list.New(tracksItems, trackDelegate{}, DEFAULT_WIDTH, LIST_HEIGHT)
+	l := list.New(tracksItems, trackDelegate{}, LIST_WIDTH, LIST_HEIGHT)
 	l.Title = title
 	l.SetShowStatusBar(true)
 	l.SetFilteringEnabled(true)
@@ -55,10 +55,10 @@ type SavedTrack struct {
 
 func (t SavedTrack) FilterValue() string {
 	ret := t.Name
-	for _, a := range t.Artists {
-		ret = fmt.Sprintf("%s %s", ret, a.Name)
-	}
-	ret += " " + t.Album.Name
+	// for _, a := range t.Artists {
+	// 	ret = fmt.Sprintf("%s %s", ret, a.Name)
+	// }
+	// ret += " " + t.Album.Name
 	return ret
 }
 
