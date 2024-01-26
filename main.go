@@ -19,9 +19,10 @@ var (
 )
 
 type mainModel struct {
-	list   tea.Model
-	player tea.Model
-	focus  int
+	list        tea.Model
+	player      tea.Model
+	collections tea.Model
+	focus       int
 }
 
 func (m mainModel) Init() tea.Cmd {
@@ -30,8 +31,9 @@ func (m mainModel) Init() tea.Cmd {
 
 func newMainModel(sptracks []spotify.SavedTrack) mainModel {
 	return mainModel{
-		list:   components.NewListModel(sptracks, "Liked Songs"),
-		player: components.NewPlayerModel(),
+		list:        components.NewListModel(sptracks, "Liked Songs"),
+		player:      components.NewPlayerModel(),
+		collections: components.NewCollectionsModel(),
 	}
 }
 
@@ -50,7 +52,17 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m mainModel) View() string {
-	return docStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, m.list.View(), m.player.View()))
+	return docStyle.Render(
+		lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.list.View(),
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				m.player.View(),
+				m.collections.View(),
+			),
+		),
+	)
 }
 
 func init() {
