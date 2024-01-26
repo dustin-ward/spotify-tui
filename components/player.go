@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,16 +12,16 @@ import (
 )
 
 var (
-	playerStyle = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("46"))
+	playerStyle = lipgloss.NewStyle().Align(lipgloss.Center).Width(40).Height(20).BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("46"))
 )
 
 var (
 	DEVICE_ID        spotify.ID
 	CurrentlyPlaying *spotify.FullTrack
+	IsPlaying        bool
 )
 
 type PlayerModel struct {
-	isPlaying bool
 }
 
 func NewPlayerModel() PlayerModel {
@@ -31,14 +32,15 @@ type PlayerStatusMsg string
 
 func PlayPauseTrack(uri *spotify.URI) tea.Cmd {
 	return func() tea.Msg {
-		playing, err := spotifyapi.PlayPauseTrack(uri, DEVICE_ID)
+		var err error
+		IsPlaying, err = spotifyapi.PlayPauseTrack(uri, DEVICE_ID)
 
 		if err != nil {
 			return PlayerStatusMsg("err " + err.Error())
 		}
 
 		if uri != nil {
-			if playing {
+			if IsPlaying {
 				// spotify:track:6rqhFgbbKwnb9MLmUQDhG6
 				id := strings.Split(string(*uri), ":")[2]
 				track, err := spotifyapi.Client.GetTrack(context.Background(), spotify.ID(id))
@@ -64,5 +66,21 @@ func (m PlayerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m PlayerModel) View() string {
-	return "TEST"
+	view := ""
+	if CurrentlyPlaying != nil {
+		view = CurrentlyPlaying.Name + "\n"
+		artists := CurrentlyPlaying.Artists[0].Name
+		for i, a := range CurrentlyPlaying.Artists {
+			if i == 0 {
+				continue
+			}
+			artists = fmt.Sprintf("%s, %s", artists, a.Name)
+		}
+		view += artists + "\n"
+		view += CurrentlyPlaying.Album.Name
+
+	} else {
+		view = "Nothing playing at the moment..."
+	}
+	return view
 }

@@ -104,7 +104,7 @@ func (d trackDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 
 	isCurrent := false
 	fn := itemStyle.Render
-	if CurrentlyPlaying != nil && t.ID == CurrentlyPlaying.ID {
+	if IsPlaying && CurrentlyPlaying != nil && t.ID == CurrentlyPlaying.ID {
 		isCurrent = true
 		fn = func(s ...string) string {
 			return playingItemStyle.Render("▶ " + strings.Join(s, " "))

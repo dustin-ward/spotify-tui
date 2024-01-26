@@ -15,10 +15,9 @@ import (
 )
 
 type mainModel struct {
-	list         tea.Model
-	player       tea.Model
-	choice       *components.SavedTrack
-	currentTrack *spotify.FullTrack
+	list   tea.Model
+	player tea.Model
+	focus  int
 }
 
 func (m mainModel) Init() tea.Cmd {
@@ -84,6 +83,7 @@ func init() {
 	}
 
 	components.CurrentlyPlaying = playerState.Item
+	components.IsPlaying = playerState.Playing
 }
 
 func main() {
