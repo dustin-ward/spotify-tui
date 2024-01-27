@@ -32,6 +32,27 @@ func GetLikedTracks() ([]spotify.SavedTrack, error) {
 	return tracks, nil
 }
 
+func GetPlaylists() ([]spotify.SimplePlaylist, error) {
+	offset := 0
+	found := PAGE_SIZE
+	playlists := make([]spotify.SimplePlaylist, 0, INIT_PAGES*PAGE_SIZE)
+	for found == PAGE_SIZE && offset < INIT_PAGES*PAGE_SIZE {
+		result, err := Client.CurrentUsersPlaylists(context.Background(),
+			spotify.Limit(PAGE_SIZE),
+			spotify.Offset(offset),
+		)
+		if err != nil {
+			return []spotify.SimplePlaylist{}, err
+		}
+
+		found = len(result.Playlists)
+		playlists = append(playlists, result.Playlists...)
+		offset += PAGE_SIZE
+	}
+
+	return playlists, nil
+}
+
 func PlayPauseTrack(uri *spotify.URI, device spotify.ID, playbackContext *spotify.URI) (bool, error) {
 	ctx := context.Background()
 	playbackStatus, err := Client.PlayerState(ctx)

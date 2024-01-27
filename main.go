@@ -29,11 +29,11 @@ func (m mainModel) Init() tea.Cmd {
 	return nil
 }
 
-func newMainModel(sptracks []spotify.SavedTrack) mainModel {
+func newMainModel(sptracks []spotify.SavedTrack, spplaylists []spotify.SimplePlaylist) mainModel {
 	return mainModel{
 		list:        components.NewListModel(sptracks, "Liked Songs"),
 		player:      components.NewPlayerModel(),
-		collections: components.NewCollectionsModel(),
+		collections: components.NewCollectionsModel(spplaylists),
 	}
 }
 
@@ -116,7 +116,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if _, err := tea.NewProgram(newMainModel(sptracks), tea.WithAltScreen()).Run(); err != nil {
+	log.Println("Getting collections...")
+	spplaylists, err := spotifyapi.GetPlaylists()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := tea.NewProgram(newMainModel(sptracks, spplaylists), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
