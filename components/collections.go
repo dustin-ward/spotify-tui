@@ -14,6 +14,8 @@ var (
 	collectionsStyle = lipgloss.NewStyle().Width(65).Height(30).Padding(2)
 )
 
+type UpdatePlaylistMsg string
+
 type CollectionsModel struct {
 	list list.Model
 }
@@ -33,14 +35,20 @@ func (p SimplePlaylist) FilterValue() string {
 	return p.Name + " " + p.SimplePlaylist.Description + " " + p.Owner.DisplayName
 }
 
-func NewCollectionsModel() CollectionsModel {
-	log.Println("Getting collections...")
+func NewCollectionsModel(userURI spotify.URI) CollectionsModel {
 	spplaylists, err := spotifyapi.GetPlaylists()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	playlists := make([]list.Item, 0, 100)
+	playlists = append(playlists, SimplePlaylist{
+		spotify.SimplePlaylist{
+			Name:        "Liked Songs",
+			Description: "Your saved tracks",
+			URI:         userURI + ":collection",
+		},
+	})
 	for _, p := range spplaylists {
 		playlists = append(playlists, SimplePlaylist{p})
 	}
@@ -61,9 +69,8 @@ func (m CollectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
-			t, _ := m.list.SelectedItem().(SimplePlaylist)
-			_ = t
-			return m, nil
+			p, _ := m.list.SelectedItem().(SimplePlaylist)
+			return m, func() tea.Msg { return UpdatePlaylistMsg(p.URI) }
 		}
 	}
 

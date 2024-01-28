@@ -28,6 +28,10 @@ const (
 	focusCollections
 )
 
+var (
+	currentUser *spotify.PrivateUser
+)
+
 type mainModel struct {
 	list        tea.Model
 	player      tea.Model
@@ -41,20 +45,27 @@ func (m mainModel) Init() tea.Cmd {
 
 func newMainModel() mainModel {
 	return mainModel{
-		list:        components.NewListModel("Liked Songs"),
+		list:        components.NewListModel(string(currentUser.URI) + ":collection"),
 		player:      components.NewPlayerModel(),
-		collections: components.NewCollectionsModel(),
+		collections: components.NewCollectionsModel(currentUser.URI),
 		focus:       focusList,
 	}
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case components.PlayerStatusMsg:
 		str := string(msg)
 		if str != "ok" {
 			log.Println(str)
 		}
+
+	case components.UpdatePlaylistMsg:
+		var cmd tea.Cmd
+		m.list, cmd = m.list.Update(msg)
+		cmds = append(cmds, cmd)
 
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -93,16 +104,18 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	var cmd tea.Cmd
 	switch m.focus {
 	case focusList:
 		m.list, cmd = m.list.Update(msg)
+		cmds = append(cmds, cmd)
 	case focusPlayer:
 		m.player, cmd = m.player.Update(msg)
+		cmds = append(cmds, cmd)
 	case focusCollections:
 		m.collections, cmd = m.collections.Update(msg)
+		cmds = append(cmds, cmd)
 	}
-	return m, cmd
+	return m, tea.Batch(cmds...)
 }
 
 func (m mainModel) View() string {
@@ -166,12 +179,12 @@ func init() {
 	components.CurrentlyPlaying = playerState.Item
 	components.IsPlaying = playerState.Playing
 
-	currentUser, err := spotifyapi.Client.CurrentUser(ctx)
+	currentUser, err = spotifyapi.Client.CurrentUser(ctx)
 	if err != nil {
 		log.Fatal("Error:", err)
 	}
-	uri := spotify.URI(fmt.Sprintf("%s:collection", currentUser.URI))
-	components.CurrentContext = &uri
+	// uri := spotify.URI(fmt.Sprintf("%s:collection", currentUser.URI))
+	// components.CurrentContext = &uri
 }
 
 func main() {

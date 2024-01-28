@@ -34,16 +34,21 @@ type ListModel struct {
 	list list.Model
 }
 
-func NewListModel(title string) ListModel {
-	log.Println("Getting tracks...")
-	sptracks, err := spotifyapi.GetLikedTracks()
+type FullTrack struct {
+	spotify.FullTrack
+}
+
+func NewListModel(uri string) ListModel {
+	CurrentContext = (*spotify.URI)(&uri)
+
+	sptracks, title, err := spotifyapi.GetTracks(uri)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	tracksItems := make([]list.Item, 0, 1000)
 	for i := 0; i < len(sptracks); i++ {
-		tracksItems = append(tracksItems, SavedTrack{sptracks[i]})
+		tracksItems = append(tracksItems, FullTrack{sptracks[i]})
 	}
 
 	l := list.New(tracksItems, trackDelegate{}, LIST_WIDTH, LIST_HEIGHT)
@@ -57,11 +62,7 @@ func NewListModel(title string) ListModel {
 	return ListModel{list: l}
 }
 
-type SavedTrack struct {
-	spotify.SavedTrack
-}
-
-func (t SavedTrack) FilterValue() string {
+func (t FullTrack) FilterValue() string {
 	ret := t.Name
 	for _, a := range t.Artists {
 		ret = fmt.Sprintf("%s %s", ret, a.Name)
@@ -76,7 +77,7 @@ func (d trackDelegate) Height() int                             { return 1 }
 func (d trackDelegate) Spacing() int                            { return 0 }
 func (d trackDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 func (d trackDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	t, ok := listItem.(SavedTrack)
+	t, ok := listItem.(FullTrack)
 	if !ok {
 		return
 	}
@@ -144,10 +145,14 @@ func (m ListModel) Init() tea.Cmd {
 
 func (m ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case UpdatePlaylistMsg:
+		uri := string(msg)
+		return NewListModel(uri), nil
+
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
-			t, _ := m.list.SelectedItem().(SavedTrack)
+			t, _ := m.list.SelectedItem().(FullTrack)
 			return m, PlayPauseTrack(&t.URI)
 		}
 	}
