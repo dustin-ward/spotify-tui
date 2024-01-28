@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/dustin-ward/spotify-tui/colours"
 	"github.com/dustin-ward/spotify-tui/components"
 	"github.com/dustin-ward/spotify-tui/spotifyapi"
 
@@ -16,8 +17,8 @@ import (
 
 var (
 	docStyle       = lipgloss.NewStyle().Padding(1, 2, 1, 2)
-	focusedStyle   = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("#00bf06"))
-	unfocusedStyle = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#5900bf"))
+	focusedStyle   = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(colours.GREEN)
+	unfocusedStyle = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(colours.PURPLE)
 )
 
 type appFocus int
@@ -55,22 +56,28 @@ func newMainModel() mainModel {
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+
 	switch msg := msg.(type) {
+	// Error messages from player component
 	case components.PlayerStatusMsg:
 		str := string(msg)
 		if str != "ok" {
 			log.Println(str)
 		}
 
+	// Main list needs to be updated
 	case components.UpdatePlaylistMsg:
 		var cmd tea.Cmd
 		m.list, cmd = m.list.Update(msg)
 		cmds = append(cmds, cmd)
 
+	// Keystrokes
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
 			return m, tea.Quit
+
+		// Switching between components
 
 		case "ctrl+l":
 			switch m.focus {
@@ -122,6 +129,7 @@ func (m mainModel) View() string {
 	listStyle := unfocusedStyle
 	playerStyle := unfocusedStyle
 	collectionsStyle := unfocusedStyle
+
 	switch m.focus {
 	case focusList:
 		listStyle = focusedStyle
@@ -145,15 +153,19 @@ func (m mainModel) View() string {
 }
 
 func init() {
+	// Check for DEVICE
 	target := os.Getenv("SPOTIFY_DEVICE")
 	if target == "" {
 		log.Fatal("Error: No device set in $SPOTIFY_DEVICE")
 	}
 
+	// Prompt user to login
 	err := spotifyapi.Login()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Get list of devices and check for the one we want
 
 	ctx := context.Background()
 	devices, err := spotifyapi.Client.PlayerDevices(ctx)
@@ -171,6 +183,8 @@ func init() {
 		log.Fatal("Error: Device not found. Make sure spotify is runnning")
 	}
 
+	// Get current player and user state to initilize the app
+
 	playerState, err := spotifyapi.Client.PlayerState(ctx)
 	if err != nil {
 		log.Fatal("Error:", err)
@@ -183,8 +197,6 @@ func init() {
 	if err != nil {
 		log.Fatal("Error:", err)
 	}
-	// uri := spotify.URI(fmt.Sprintf("%s:collection", currentUser.URI))
-	// components.CurrentContext = &uri
 }
 
 func main() {

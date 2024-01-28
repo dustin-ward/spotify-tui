@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dustin-ward/spotify-tui/colours"
 	"github.com/dustin-ward/spotify-tui/spotifyapi"
 	"github.com/mattn/go-runewidth"
 	"github.com/zmb3/spotify/v2"
@@ -20,10 +21,10 @@ const LIST_WIDTH = 92
 const LIST_HEIGHT = 42
 
 var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
+	titleStyle        = list.DefaultStyles().Title.Background(colours.PURPLE).Foreground(colours.GREEN).MarginLeft(2)
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#5900bf"))
-	playingItemStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#00bf06"))
+	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(colours.PURPLE)
+	playingItemStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(colours.GREEN)
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)

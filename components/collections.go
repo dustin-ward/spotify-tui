@@ -55,6 +55,7 @@ func NewCollectionsModel(userURI spotify.URI) CollectionsModel {
 
 	l := list.New(playlists, list.NewDefaultDelegate(), 58, 27)
 	l.Title = "Playlists and Mixes"
+	l.Styles.Title = titleStyle
 	l.SetShowHelp(false)
 
 	return CollectionsModel{list: l}
