@@ -39,11 +39,11 @@ func (m mainModel) Init() tea.Cmd {
 	return nil
 }
 
-func newMainModel(sptracks []spotify.SavedTrack, spplaylists []spotify.SimplePlaylist) mainModel {
+func newMainModel() mainModel {
 	return mainModel{
-		list:        components.NewListModel(sptracks, "Liked Songs"),
+		list:        components.NewListModel("Liked Songs"),
 		player:      components.NewPlayerModel(),
-		collections: components.NewCollectionsModel(spplaylists),
+		collections: components.NewCollectionsModel(),
 		focus:       focusList,
 	}
 }
@@ -132,14 +132,14 @@ func (m mainModel) View() string {
 }
 
 func init() {
-	err := spotifyapi.Login()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	target := os.Getenv("SPOTIFY_DEVICE")
 	if target == "" {
 		log.Fatal("Error: No device set in $SPOTIFY_DEVICE")
+	}
+
+	err := spotifyapi.Login()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	ctx := context.Background()
@@ -154,7 +154,6 @@ func init() {
 			components.DEVICE_ID = d.ID
 		}
 	}
-
 	if components.DEVICE_ID == "" {
 		log.Fatal("Error: Device not found. Make sure spotify is runnning")
 	}
@@ -176,19 +175,7 @@ func init() {
 }
 
 func main() {
-	log.Println("Getting tracks...")
-	sptracks, err := spotifyapi.GetLikedTracks()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Getting collections...")
-	spplaylists, err := spotifyapi.GetPlaylists()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if _, err := tea.NewProgram(newMainModel(sptracks, spplaylists), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(newMainModel(), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

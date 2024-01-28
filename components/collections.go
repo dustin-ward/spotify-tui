@@ -1,9 +1,12 @@
 package components
 
 import (
+	"log"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dustin-ward/spotify-tui/spotifyapi"
 	"github.com/zmb3/spotify/v2"
 )
 
@@ -30,13 +33,19 @@ func (p SimplePlaylist) FilterValue() string {
 	return p.Name + " " + p.SimplePlaylist.Description + " " + p.Owner.DisplayName
 }
 
-func NewCollectionsModel(spplaylists []spotify.SimplePlaylist) CollectionsModel {
+func NewCollectionsModel() CollectionsModel {
+	log.Println("Getting collections...")
+	spplaylists, err := spotifyapi.GetPlaylists()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	playlists := make([]list.Item, 0, 100)
 	for _, p := range spplaylists {
 		playlists = append(playlists, SimplePlaylist{p})
 	}
 
-	l := list.New(playlists, list.NewDefaultDelegate(), 58, 24)
+	l := list.New(playlists, list.NewDefaultDelegate(), 58, 27)
 	l.Title = "Playlists and Mixes"
 	l.SetShowHelp(false)
 
@@ -52,7 +61,8 @@ func (m CollectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
-			t, _ := m.list.SelectedItem().(spotify.SimplePlaylist)
+			t, _ := m.list.SelectedItem().(SimplePlaylist)
+			_ = t
 			return m, nil
 		}
 	}

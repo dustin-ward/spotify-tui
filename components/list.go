@@ -3,6 +3,7 @@ package components
 import (
 	"fmt"
 	"io"
+	"log"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -10,6 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dustin-ward/spotify-tui/spotifyapi"
 	"github.com/mattn/go-runewidth"
 	"github.com/zmb3/spotify/v2"
 )
@@ -32,7 +34,13 @@ type ListModel struct {
 	list list.Model
 }
 
-func NewListModel(sptracks []spotify.SavedTrack, title string) ListModel {
+func NewListModel(title string) ListModel {
+	log.Println("Getting tracks...")
+	sptracks, err := spotifyapi.GetLikedTracks()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	tracksItems := make([]list.Item, 0, 1000)
 	for i := 0; i < len(sptracks); i++ {
 		tracksItems = append(tracksItems, SavedTrack{sptracks[i]})
