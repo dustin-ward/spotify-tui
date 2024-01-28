@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dustin-ward/spotify-tui/colours"
 	"github.com/dustin-ward/spotify-tui/spotifyapi"
 	"github.com/zmb3/spotify/v2"
 )
@@ -25,6 +26,7 @@ type SimplePlaylist struct {
 }
 
 func (p SimplePlaylist) Title() string { return p.Name }
+
 func (p SimplePlaylist) Description() string {
 	if p.SimplePlaylist.Description == "" {
 		return p.Owner.DisplayName
@@ -53,7 +55,11 @@ func NewCollectionsModel(userURI spotify.URI) CollectionsModel {
 		playlists = append(playlists, SimplePlaylist{p})
 	}
 
-	l := list.New(playlists, list.NewDefaultDelegate(), 58, 27)
+	d := list.NewDefaultDelegate()
+	d.Styles.SelectedTitle = d.Styles.SelectedTitle.Foreground(colours.PURPLE)
+	d.Styles.SelectedDesc = d.Styles.SelectedDesc.Foreground(colours.PURPLE)
+
+	l := list.New(playlists, d, 58, 27)
 	l.Title = "Playlists and Mixes"
 	l.Styles.Title = titleStyle
 	l.SetShowHelp(false)
