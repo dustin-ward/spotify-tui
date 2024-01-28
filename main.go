@@ -58,6 +58,9 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
+		case "q", "ctrl+c":
+			return m, tea.Quit
+
 		case "ctrl+l":
 			switch m.focus {
 			case focusList:
