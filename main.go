@@ -91,7 +91,14 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
+	switch m.focus {
+	case focusList:
+		m.list, cmd = m.list.Update(msg)
+	case focusPlayer:
+		m.player, cmd = m.player.Update(msg)
+	case focusCollections:
+		m.collections, cmd = m.collections.Update(msg)
+	}
 	return m, cmd
 }
 

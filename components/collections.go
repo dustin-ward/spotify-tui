@@ -48,7 +48,9 @@ func (m CollectionsModel) Init() tea.Cmd {
 }
 
 func (m CollectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, nil
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
 }
 
 func (m CollectionsModel) View() string {
