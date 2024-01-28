@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	playerStyle = lipgloss.NewStyle().Align(lipgloss.Center).Width(65).Height(10).BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#5900bf")).PaddingTop(2).PaddingBottom(2)
+	playerStyle = lipgloss.NewStyle().Align(lipgloss.Center).Width(65).Height(10).PaddingTop(2).PaddingBottom(2)
 )
 
 var (

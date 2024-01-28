@@ -15,14 +15,24 @@ import (
 )
 
 var (
-	docStyle = lipgloss.NewStyle().Padding(1, 2, 1, 2)
+	docStyle       = lipgloss.NewStyle().Padding(1, 2, 1, 2)
+	focusedStyle   = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("#00bf06"))
+	unfocusedStyle = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#5900bf"))
+)
+
+type appFocus int
+
+const (
+	focusList appFocus = iota
+	focusPlayer
+	focusCollections
 )
 
 type mainModel struct {
 	list        tea.Model
 	player      tea.Model
 	collections tea.Model
-	focus       int
+	focus       appFocus
 }
 
 func (m mainModel) Init() tea.Cmd {
@@ -34,6 +44,7 @@ func newMainModel(sptracks []spotify.SavedTrack, spplaylists []spotify.SimplePla
 		list:        components.NewListModel(sptracks, "Liked Songs"),
 		player:      components.NewPlayerModel(),
 		collections: components.NewCollectionsModel(spplaylists),
+		focus:       focusList,
 	}
 }
 
@@ -44,6 +55,39 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if str != "ok" {
 			log.Println(str)
 		}
+
+	case tea.KeyMsg:
+		switch keypress := msg.String(); keypress {
+		case "ctrl+l":
+			switch m.focus {
+			case focusList:
+				m.focus = focusCollections
+			case focusPlayer:
+			case focusCollections:
+			}
+		case "ctrl+h":
+			switch m.focus {
+			case focusList:
+			case focusPlayer:
+				m.focus = focusList
+			case focusCollections:
+				m.focus = focusList
+			}
+		case "ctrl+k":
+			switch m.focus {
+			case focusList:
+			case focusPlayer:
+			case focusCollections:
+				m.focus = focusPlayer
+			}
+		case "ctrl+j":
+			switch m.focus {
+			case focusList:
+			case focusPlayer:
+				m.focus = focusCollections
+			case focusCollections:
+			}
+		}
 	}
 
 	var cmd tea.Cmd
@@ -52,14 +96,26 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m mainModel) View() string {
+	listStyle := unfocusedStyle
+	playerStyle := unfocusedStyle
+	collectionsStyle := unfocusedStyle
+	switch m.focus {
+	case focusList:
+		listStyle = focusedStyle
+	case focusPlayer:
+		playerStyle = focusedStyle
+	case focusCollections:
+		collectionsStyle = focusedStyle
+	}
+
 	return docStyle.Render(
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			m.list.View(),
+			listStyle.Render(m.list.View()),
 			lipgloss.JoinVertical(
 				lipgloss.Left,
-				m.player.View(),
-				m.collections.View(),
+				playerStyle.Render(m.player.View()),
+				collectionsStyle.Render(m.collections.View()),
 			),
 		),
 	)

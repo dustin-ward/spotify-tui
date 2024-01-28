@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	collectionsStyle = lipgloss.NewStyle().Width(65).Height(30).BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#5900bf")).Padding(2)
+	collectionsStyle = lipgloss.NewStyle().Width(65).Height(30).Padding(2)
 )
 
 type CollectionsModel struct {

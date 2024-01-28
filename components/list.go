@@ -25,7 +25,7 @@ var (
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-	listStyle         = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("#00bf06")).MarginRight(1).PaddingRight(2)
+	listStyle         = lipgloss.NewStyle().MarginRight(1).PaddingRight(2)
 )
 
 type ListModel struct {
