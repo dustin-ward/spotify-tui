@@ -12,29 +12,13 @@ import (
 )
 
 var (
-	collectionsStyle = lipgloss.NewStyle().Width(65).Height(30).Padding(2)
+	collectionsStyle = lipgloss.NewStyle().Width(65).Height(31).Padding(1)
 )
 
 type UpdatePlaylistMsg string
 
 type CollectionsModel struct {
 	list list.Model
-}
-
-type SimplePlaylist struct {
-	spotify.SimplePlaylist
-}
-
-func (p SimplePlaylist) Title() string { return p.Name }
-
-func (p SimplePlaylist) Description() string {
-	if p.SimplePlaylist.Description == "" {
-		return p.Owner.DisplayName
-	}
-	return p.SimplePlaylist.Description
-}
-func (p SimplePlaylist) FilterValue() string {
-	return p.Name + " " + p.SimplePlaylist.Description + " " + p.Owner.DisplayName
 }
 
 func NewCollectionsModel(userURI spotify.URI) CollectionsModel {
@@ -55,13 +39,11 @@ func NewCollectionsModel(userURI spotify.URI) CollectionsModel {
 		playlists = append(playlists, SimplePlaylist{p})
 	}
 
-	d := list.NewDefaultDelegate()
-	d.Styles.SelectedTitle = d.Styles.SelectedTitle.Foreground(colours.PURPLE)
-	d.Styles.SelectedDesc = d.Styles.SelectedDesc.Foreground(colours.PURPLE)
-
+	d := playlistDelegate{}
 	l := list.New(playlists, d, 58, 27)
 	l.Title = "Playlists and Mixes"
 	l.Styles.Title = titleStyle
+	l.Styles.FilterCursor = l.Styles.FilterCursor.Foreground(colours.GREEN)
 	l.SetShowHelp(false)
 
 	return CollectionsModel{list: l}
