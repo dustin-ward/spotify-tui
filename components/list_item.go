@@ -50,7 +50,7 @@ func (d trackDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 	artistWidth := runewidth.StringWidth(artist)
 	artistRunes := utf8.RuneCountInString(artist)
 	if artistWidth > 15 {
-		artist = string([]rune(artist)[:10]) + "..."
+		artist = string([]rune(artist)[:8]) + "..."
 	}
 	album := t.Album.Name
 	albumWidth := runewidth.StringWidth(album)

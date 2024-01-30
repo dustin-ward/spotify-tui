@@ -26,17 +26,24 @@ var (
 	listStyle         = lipgloss.NewStyle().MarginRight(1).PaddingRight(2)
 )
 
+var (
+	CurrentPage int
+	LastPage    bool
+)
+
 type ListModel struct {
 	list list.Model
 }
 
 func NewListModel(uri string) ListModel {
 	CurrentContext = (*spotify.URI)(&uri)
+	CurrentPage = 1
 
-	sptracks, title, err := spotifyapi.GetTracks(uri)
+	sptracks, title, err := spotifyapi.GetTracksFromPlaylist(uri)
 	if err != nil {
 		log.Fatal(err)
 	}
+	LastPage = len(sptracks) < spotifyapi.PAGE_SIZE
 
 	tracksItems := make([]list.Item, 0, 1000)
 	for i := 0; i < len(sptracks); i++ {
@@ -59,6 +66,9 @@ func (m ListModel) Init() tea.Cmd {
 }
 
 func (m ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
 	switch msg := msg.(type) {
 	case UpdatePlaylistMsg:
 		uri := string(msg)
@@ -72,9 +82,29 @@ func (m ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	var cmd tea.Cmd
+	if !LastPage && m.list.Paginator.OnLastPage() {
+		orig_items := m.list.Items()
+		new_items, err := spotifyapi.GetTrackPage(string(*CurrentContext), CurrentPage)
+		if err != nil {
+			log.Println("unable to fetch tracks")
+		} else {
+			if len(new_items) < spotifyapi.PAGE_SIZE {
+				LastPage = true
+			}
+
+			for _, t := range new_items {
+				orig_items = append(orig_items, FullTrack{t})
+			}
+
+			CurrentPage++
+			cmd = m.list.SetItems(orig_items)
+			cmds = append(cmds, cmd)
+		}
+	}
+
 	m.list, cmd = m.list.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m ListModel) View() string {

@@ -2,6 +2,7 @@ package spotifyapi
 
 import (
 	"context"
+	"log"
 	"strings"
 
 	"github.com/zmb3/spotify/v2"
@@ -12,7 +13,8 @@ const (
 	INIT_PAGES = 1
 )
 
-func GetTracks(uri string) ([]spotify.FullTrack, string, error) {
+func GetTracksFromPlaylist(uri string) ([]spotify.FullTrack, string, error) {
+	log.Println("INIT PLAYLIST:", uri)
 	ctx := context.Background()
 
 	var title string
@@ -63,6 +65,44 @@ func GetTracks(uri string) ([]spotify.FullTrack, string, error) {
 	return tracks, title, nil
 }
 
+func GetTrackPage(uri string, page int) ([]spotify.FullTrack, error) {
+	log.Println("GET PAGE:", uri, page)
+	ctx := context.Background()
+
+	tracks := make([]spotify.FullTrack, 0, INIT_PAGES*PAGE_SIZE)
+	if strings.HasSuffix(uri, "collection") {
+		result, err := Client.CurrentUsersTracks(
+			ctx,
+			spotify.Limit(PAGE_SIZE),
+			spotify.Offset(page*PAGE_SIZE),
+		)
+		if err != nil {
+			return []spotify.FullTrack{}, err
+		}
+
+		for _, t := range result.Tracks {
+			tracks = append(tracks, t.FullTrack)
+		}
+
+	} else {
+		id := strings.Split(uri, ":")[2]
+		result, err := Client.GetPlaylist(
+			ctx,
+			spotify.ID(id),
+			spotify.Limit(PAGE_SIZE),
+			spotify.Offset(page*PAGE_SIZE),
+		)
+		if err != nil {
+			return []spotify.FullTrack{}, err
+		}
+
+		for _, t := range result.Tracks.Tracks {
+			tracks = append(tracks, t.Track)
+		}
+	}
+	return tracks, nil
+}
+
 func GetPlaylists() ([]spotify.SimplePlaylist, error) {
 	offset := 0
 	found := PAGE_SIZE
@@ -106,7 +146,6 @@ func PlayPauseTrack(uri *spotify.URI, device spotify.ID, playbackContext *spotif
 			PlaybackOffset: &spotify.PlaybackOffset{
 				URI: *uri,
 			},
-			// URIs:            []spotify.URI{*uri},
 		})
 	}
 }

@@ -56,6 +56,7 @@ func newMainModel() mainModel {
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+	log.Println("MSG:", msg)
 
 	switch msg := msg.(type) {
 	// Error messages from player component
@@ -109,19 +110,28 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case focusCollections:
 			}
 		}
-	}
 
-	switch m.focus {
-	case focusList:
+		switch m.focus {
+		case focusList:
+			m.list, cmd = m.list.Update(msg)
+			cmds = append(cmds, cmd)
+		case focusPlayer:
+			m.player, cmd = m.player.Update(msg)
+			cmds = append(cmds, cmd)
+		case focusCollections:
+			m.collections, cmd = m.collections.Update(msg)
+			cmds = append(cmds, cmd)
+		}
+
+	default:
 		m.list, cmd = m.list.Update(msg)
 		cmds = append(cmds, cmd)
-	case focusPlayer:
 		m.player, cmd = m.player.Update(msg)
 		cmds = append(cmds, cmd)
-	case focusCollections:
 		m.collections, cmd = m.collections.Update(msg)
 		cmds = append(cmds, cmd)
 	}
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -200,6 +210,15 @@ func init() {
 }
 
 func main() {
+	if len(os.Getenv("DEBUG")) > 0 {
+		f, err := tea.LogToFile("debug.log", "debug")
+		if err != nil {
+			fmt.Println("fatal:", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+	}
+
 	if _, err := tea.NewProgram(newMainModel(), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
